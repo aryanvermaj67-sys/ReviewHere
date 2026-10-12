@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Reviews · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap">
+  <div class="page-head">
+    <div>
+      <h1 style="margin:0">Reviews</h1>
+      <p class="muted small" style="margin:.2rem 0 0">{{ total }} matching review{{ '' if total == 1 else 's' }}</p>
+    </div>
+    <a class="btn ghost" href="/dashboard/export.csv">Export CSV</a>
+  </div>
+
+  <form class="filters card" method="get">
+    <div class="field">
+      <label for="rating">Rating</label>
+      <select id="rating" name="rating">
+        <option value="">All</option>
+        <option value="negative" {% if f.rating == 'negative' %}selected{% endif %}>1–3 stars</option>
+        {% for i in [5, 4, 3, 2, 1] %}
+        <option value="{{ i }}" {% if f.rating == i|string %}selected{% endif %}>{{ i }} stars</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="">All</option>
+        <option value="new" {% if f.status == 'new' %}selected{% endif %}>Open</option>
+        <option value="resolved" {% if f.status == 'resolved' %}selected{% endif %}>Resolved</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="tag_id">{{ vocab(user.business_type).unit }}</label>
+      <select id="tag_id" name="tag_id">
+        <option value="">All</option>
+        {% for t in tags %}
+        <option value="{{ t.id }}" {% if f.tag_id == t.id|string %}selected{% endif %}>{{ t.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="days">Period</label>
+      <select id="days" name="days">
+        <option value="">All time</option>
+        {% for d, label in [('7','Last 7 days'), ('30','Last 30 days'), ('90','Last 90 days')] %}
+        <option value="{{ d }}" {% if f.days == d %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn" type="submit">Filter</button>
+    <a class="btn ghost" href="/dashboard/reviews">Reset</a>
+  </form>
+
+  <div class="card">
+    {% for r in reviews %}
+    <div class="review-item">
+      <div class="review-top">
+        <span class="rating-stars">{{ r.rating | stars }}</span>
+        <strong class="small">{{ r.tag_label or 'General' }}</strong>
+        <span class="small muted">{{ r.created_at | localdt(user.tz_offset) }}</span>
+        {% if r.rating <= 3 %}<span class="badge {{ 'resolved' if r.status == 'resolved' else 'new' }}">{{ r.status }}</span>{% endif %}
+        {% if r.routed_public %}<span class="badge google">to Google</span>{% endif %}
+      </div>
+
+      {% if r.comment %}<p class="quote">“{{ r.comment }}”</p>{% endif %}
+
+      <div class="small muted">
+        {% set v = vocab(user.business_type) %}
+        {% if r.quality %}{{ v.categories.quality }} {{ r.quality }} · {% endif %}
+        {% if r.service %}Service {{ r.service }} · {% endif %}
+        {% if r.environment %}{{ v.categories.environment }} {{ r.environment }} · {% endif %}
+        {% if r.value %}{{ v.categories.value }} {{ r.value }} · {% endif %}
+        {% if r.customer_name or r.customer_contact %}
+        <strong>{{ r.customer_name }}</strong> {{ r.customer_contact }}
+        {% else %}Anonymous{% endif %}
+      </div>
+
+      {% if r.owner_note %}
+      <p class="small" style="margin:.4rem 0 0;padding:.4rem .6rem;background:#f5f2ed;border-radius:8px">
+        <strong>Your note:</strong> {{ r.owner_note }}</p>
+      {% endif %}
+
+      {% if r.rating <= 3 %}
+      <form method="post" action="/dashboard/reviews/{{ r.id }}/update"
+            style="display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap">
+        <input type="text" name="owner_note" placeholder="Action taken / note to the team"
+               value="{{ r.owner_note }}" style="flex:1;min-width:200px">
+        <input type="hidden" name="status" value="{{ 'new' if r.status == 'resolved' else 'resolved' }}">
+        <button class="btn ghost" type="submit">
+          {{ 'Reopen' if r.status == 'resolved' else 'Mark resolved' }}
+        </button>
+      </form>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="muted small">No reviews match these filters.</p>
+    {% endfor %}
+  </div>
+
+  {% if pages > 1 %}
+  <div style="display:flex;gap:.5rem;justify-content:center;margin-top:1.2rem;align-items:center">
+    {% set qs = 'rating=' ~ f.rating ~ '&status=' ~ f.status ~ '&tag_id=' ~ f.tag_id ~ '&days=' ~ f.days %}
+    {% if page_no > 1 %}<a class="btn ghost" href="?{{ qs }}&page={{ page_no - 1 }}">← Previous</a>{% endif %}
+    <span class="small muted">Page {{ page_no }} of {{ pages }}</span>
+    {% if page_no < pages %}<a class="btn ghost" href="?{{ qs }}&page={{ page_no + 1 }}">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

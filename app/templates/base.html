@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ReviewHere{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⭐</text></svg>">
+  {% block head %}{% endblock %}
+</head>
+<body>
+{% if user %}
+<nav class="nav noprint">
+  <div class="nav-in">
+    <a class="brand" href="/dashboard">Review<span>Here</span></a>
+    <a class="link {% if page == 'overview' %}active{% endif %}" href="/dashboard">Overview</a>
+    <a class="link {% if page == 'reviews' %}active{% endif %}" href="/dashboard/reviews">Reviews</a>
+    <a class="link {% if page == 'tags' %}active{% endif %}" href="/dashboard/tags">Tags</a>
+    <a class="link {% if page == 'billing' %}active{% endif %}" href="/dashboard/billing">Billing</a>
+    <a class="link {% if page == 'settings' %}active{% endif %}" href="/dashboard/settings">Settings</a>
+    <div class="spacer"></div>
+    <span class="small muted">{{ user.business_name }}</span>
+    <a class="link" href="/logout">Log out</a>
+  </div>
+</nav>
+{% endif %}
+{% if user %}
+  {% set standing = billing_status(user) %}
+  {% if standing.in_trial and standing.trial_days_left <= 7 %}
+  <div class="trialbar">
+    Free trial — <strong>{{ standing.trial_days_left }} day{{ '' if standing.trial_days_left == 1 else 's' }} left</strong>.
+    <a href="/dashboard/billing">Subscribe to keep your dashboard →</a>
+  </div>
+  {% endif %}
+{% endif %}
+{% block body %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Copy this to C:\Users\OMEN\.cloudflared\config.yml and replace YOUR-TUNNEL-ID
+# with the id printed by:  cloudflared tunnel create reviewhere
+#
+# Both hostnames point at the app running locally on port 8000 (serve_public.ps1).
+# The final catch-all returns 404 for anything else that reaches the tunnel.
+
+tunnel: YOUR-TUNNEL-ID
+credentials-file: C:\Users\OMEN\.cloudflared\YOUR-TUNNEL-ID.json
+
+ingress:
+  - hostname: reviewhere.in
+    service: http://127.0.0.1:8000
+  - hostname: www.reviewhere.in
+    service: http://127.0.0.1:8000
+  - service: http_status:404

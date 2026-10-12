@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Rate {{ business.name }}{% endblock %}
+{% block head %}
+<style>:root { --accent: {{ business.accent }}; }</style>
+{% endblock %}
+
+{% block body %}
+<div class="tap">
+  <div class="tap-head">
+    {% if business.logo_url %}
+      <img class="tap-logo" src="{{ business.logo_url }}" alt="{{ business.name }}">
+    {% else %}
+      <div class="tap-logo placeholder">{{ business.name[0] | upper }}</div>
+    {% endif %}
+    <h1>{{ business.name }}</h1>
+    {% if business.tagline %}<p class="muted" style="margin:.2rem 0">{{ business.tagline }}</p>{% endif %}
+    {% if tag %}<div class="tap-table">{{ tag.label }}{% if tag.zone %} · {{ tag.zone }}{% endif %}</div>{% endif %}
+  </div>
+
+  <form class="card" method="post" action="{{ action }}" id="reviewForm">
+    <input type="hidden" name="rating" id="rating" value="">
+    <p style="text-align:center;font-weight:600;margin:.2rem 0 .4rem">How was your experience?</p>
+
+    <div class="stars" id="starRow">
+      {% for i in range(1, 6) %}
+      <button type="button" class="star" data-value="{{ i }}" aria-label="{{ i }} star">★</button>
+      {% endfor %}
+    </div>
+    <div class="rating-word" id="ratingWord"></div>
+
+    <!-- everything below appears once a rating is picked -->
+    <div class="step" id="detail" hidden>
+      <p id="prompt" style="font-weight:600;margin:.8rem 0 .5rem"></p>
+
+      <div class="chips" id="chipRow"></div>
+
+      <div class="field" style="margin-top:1rem">
+        <label for="comment" id="commentLabel">Tell us more (optional)</label>
+        <textarea id="comment" name="comment" rows="3" placeholder="What stood out?"></textarea>
+      </div>
+
+      <details style="margin-bottom:1rem">
+        <summary class="small muted" style="cursor:pointer">Rate the details (optional)</summary>
+        <div style="margin-top:.6rem">
+          {% set v = vocab(business.business_type) %}
+          {% for key in ['quality', 'service', 'environment', 'value'] %}
+          {% set label = v.categories[key] %}
+          <div class="subrate">
+            <span class="small">{{ label }}</span>
+            <span class="mini" data-field="{{ key }}">
+              {% for i in range(1, 6) %}
+              <button type="button" class="mini-star" data-value="{{ i }}">★</button>
+              {% endfor %}
+            </span>
+            <input type="hidden" name="{{ key }}" value="">
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+
+      <div id="contactBlock" hidden>
+        <div class="field">
+          <label for="customer_name">Your name (optional)</label>
+          <input type="text" id="customer_name" name="customer_name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="customer_contact">Phone or email, so the manager can make it right</label>
+          <input type="text" id="customer_contact" name="customer_contact" autocomplete="email">
+        </div>
+      </div>
+
+      <button class="btn lg block" type="submit" id="submitBtn">Submit</button>
+    </div>
+  </form>
+
+  <p class="legal">
+    Your feedback goes straight to the {{ business.name }} management team.<br>
+    <a href="/privacy" style="color:inherit;text-decoration:underline">How your data is used</a>
+  </p>
+</div>
+
+<script>
+  const THRESHOLD = {{ business.positive_threshold }};
+  const WORDS = {1: "Very poor", 2: "Poor", 3: "Okay", 4: "Good", 5: "Excellent"};
+  const GOOD_CHIPS = {{ vocab(business.business_type).chips_good | tojson }};
+  const BAD_CHIPS  = {{ vocab(business.business_type).chips_bad | tojson }};
+
+  const ratingInput = document.getElementById("rating");
+  const detail = document.getElementById("detail");
+  const prompt = document.getElementById("prompt");
+  const chipRow = document.getElementById("chipRow");
+  const contactBlock = document.getElementById("contactBlock");
+  const submitBtn = document.getElementById("submitBtn");
+  const commentBox = document.getElementById("comment");
+  const selected = new Set();
+
+  function paint(row, value, cls) {
+    row.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle(cls, Number(b.dataset.value) <= value);
+    });
+  }
+
+  function renderChips(list) {
+    selected.clear();
+    chipRow.innerHTML = "";
+    list.forEach(function (text) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.textContent = text;
+      b.addEventListener("click", function () {
+        b.classList.toggle("on");
+        if (selected.has(text)) { selected.delete(text); } else { selected.add(text); }
+      });
+      chipRow.appendChild(b);
+    });
+  }
+
+  document.querySelectorAll("#starRow .star").forEach(function (star) {
+    star.addEventListener("click", function () {
+      const value = Number(star.dataset.value);
+      ratingInput.value = value;
+      paint(document.getElementById("starRow"), value, "on");
+      document.getElementById("ratingWord").textContent = WORDS[value];
+
+      const happy = value >= THRESHOLD;
+      prompt.textContent = happy ? "Lovely! What did you enjoy?" : "Sorry about that. What went wrong?";
+      document.getElementById("commentLabel").textContent = happy
+        ? "Anything else you would like to add? (optional)"
+        : "Tell us what happened (optional)";
+      commentBox.placeholder = happy ? "What stood out?" : "The more detail, the faster we can fix it.";
+      submitBtn.textContent = happy ? "Submit review" : "Send privately to the manager";
+      contactBlock.hidden = happy;
+      renderChips(happy ? GOOD_CHIPS : BAD_CHIPS);
+      detail.hidden = false;
+      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  });
+
+  document.querySelectorAll(".mini").forEach(function (row) {
+    const hidden = row.parentElement.querySelector("input[type=hidden]");
+    row.querySelectorAll(".mini-star").forEach(function (star) {
+      star.addEventListener("click", function () {
+        const value = Number(star.dataset.value);
+        hidden.value = value;
+        paint(row, value, "on");
+      });
+    });
+  });
+
+  document.getElementById("reviewForm").addEventListener("submit", function (event) {
+    if (!ratingInput.value) {
+      event.preventDefault();
+      return;
+    }
+    if (selected.size) {
+      const line = Array.from(selected).join(", ");
+      commentBox.value = commentBox.value ? line + " — " + commentBox.value : line;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending…";
+  });
+</script>
+{% endblock %}

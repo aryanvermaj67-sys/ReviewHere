@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Billing · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:820px">
+  <div class="page-head">
+    <div>
+      <h1 style="margin:0">Billing</h1>
+      <p class="muted small" style="margin:.2rem 0 0">
+        Your subscription, and orders for physical tags.
+      </p>
+    </div>
+  </div>
+
+  {% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+  {% if error %}<div class="notice" style="background:#fdeceb;border-color:#f5c6c2;color:#a03028">{{ error }}</div>{% endif %}
+
+  {% if request.query_params.get('locked') %}
+  <div class="notice" style="background:#fdf1e7;border-color:#f3d9bd;color:#9a5b0c">
+    <strong>Your free trial has ended.</strong> Your tags are still working and reviews are still
+    being collected — subscribe to get back into the dashboard and read them.
+  </div>
+  {% endif %}
+
+  <!-- ------------------------------------------------------ subscription -->
+  <div class="card" style="margin-bottom:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+      <div>
+        <h3 style="margin-top:0">Subscription</h3>
+        {% if s.paying %}
+        <p style="margin:0"><span class="badge resolved">Active</span>
+          Renewing automatically.</p>
+        {% elif s.in_trial %}
+        <p style="margin:0"><span class="badge new">Free trial</span>
+          <strong>{{ s.trial_days_left }} day{{ '' if s.trial_days_left == 1 else 's' }}</strong> left.</p>
+        <p class="small muted" style="margin:.3rem 0 0">
+          Everything is unlocked until then. No card needed to try it.
+        </p>
+        {% else %}
+        <p style="margin:0"><span class="badge new">Expired</span> Dashboard locked.</p>
+        <p class="small muted" style="margin:.3rem 0 0">
+          Reviews are still arriving — subscribe to read them again.
+        </p>
+        {% endif %}
+      </div>
+      <div style="text-align:right">
+        <div class="price">₹{{ s.price }}<small>/month</small></div>
+        {% if not s.paying %}
+        <form method="post" action="/dashboard/billing/subscribe" style="margin-top:.5rem">
+          <button class="btn" type="submit" {% if not s.payments_configured %}disabled{% endif %}>
+            Subscribe
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% if not s.payments_configured %}
+    <p class="small muted" style="margin:.8rem 0 0;padding-top:.8rem;border-top:1px solid var(--line)">
+      Payments are not switched on for this server yet, so the button is disabled. Set the Razorpay
+      keys to enable it — see <code class="token">DEPLOY.md</code>.
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- --------------------------------------------------------- tag order -->
+  <div class="card" style="margin-bottom:1rem">
+    <h3 style="margin-top:0">Order NFC tags</h3>
+    <p class="small muted" style="margin:.2rem 0 1rem">
+      Printed, programmed and posted to you — ₹{{ s.tag_price }} per tag. You currently have
+      <strong>{{ tag_count }}</strong> tag{{ '' if tag_count == 1 else 's' }} set up in the dashboard.
+      Tags are a one-time purchase and can be ordered during the trial.
+    </p>
+    <form method="post" action="/dashboard/billing/order">
+      <div class="filters" style="align-items:flex-end">
+        <div class="field" style="min-width:110px">
+          <label for="quantity">How many</label>
+          <input type="number" id="quantity" name="quantity" value="{{ tag_count or 8 }}"
+                 min="1" max="500" oninput="updateTotal()">
+        </div>
+        <div class="field" style="flex:1;min-width:180px">
+          <label for="ship_name">Deliver to</label>
+          <input type="text" id="ship_name" name="ship_name" value="{{ b.name }}" maxlength="80">
+        </div>
+        <div class="field" style="min-width:150px">
+          <label for="ship_phone">Phone</label>
+          <input type="text" id="ship_phone" name="ship_phone" maxlength="20" placeholder="For the courier">
+        </div>
+      </div>
+      <div class="field">
+        <label for="ship_address">Address</label>
+        <textarea id="ship_address" name="ship_address" rows="2" maxlength="400"
+                  placeholder="Street, area, city, PIN code"></textarea>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div>
+          <div class="label small muted">Total</div>
+          <div class="price" id="total">₹{{ s.tag_price }}</div>
+        </div>
+        <button class="btn lg" type="submit">
+          {% if s.payments_configured %}Pay and order{% else %}Record order{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ------------------------------------------------------------ orders -->
+  <div class="card">
+    <h3 style="margin-top:0">Order history</h3>
+    {% if orders %}
+    <div class="scroll-x"><table>
+      <tr><th>Date</th><th>Tags</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
+      {% for o in orders %}
+      <tr class="order-row">
+        <td>{{ o.created_at | localdt(user.tz_offset) }}</td>
+        <td>{{ o.quantity }}</td>
+        <td>₹{{ rupees(o.amount_paise) }}</td>
+        <td>
+          <span class="badge {{ 'resolved' if o.status in ('paid', 'shipped') else 'new' }}">{{ o.status }}</span>
+          {% if o.status == 'created' %}
+          <a class="small" href="/dashboard/billing/pay/{{ o.id }}">Pay now →</a>
+          {% endif %}
+        </td>
+        <td class="small muted">{{ o.provider_payment_id or o.provider_order_id or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </table></div>
+    {% else %}
+    <p class="muted small" style="margin:0">No orders yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const UNIT_PAISE = {{ tag_price_paise }};
+  function updateTotal() {
+    const qty = Math.max(1, Math.min(500, parseInt(document.getElementById("quantity").value || "1", 10)));
+    const total = (qty * UNIT_PAISE) / 100;
+    document.getElementById("total").textContent = "₹" + total.toLocaleString("en-IN");
+  }
+  updateTotal();
+</script>
+{% endblock %}

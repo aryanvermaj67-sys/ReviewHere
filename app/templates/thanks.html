@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Thank you{% endblock %}
+{% block head %}<style>:root { --accent: {{ business.accent }}; }</style>{% endblock %}
+
+{% block body %}
+{% set happy = review.rating >= business.positive_threshold %}
+<div class="thanks">
+  <div class="thanks-card">
+    {% if happy %}
+      <div class="emoji">🌟</div>
+      <h1>Thank you!</h1>
+      <p class="muted">
+        You rated {{ business.name }} {{ review.rating }} out of 5 — that means a lot to a small team.
+      </p>
+    {% else %}
+      <div class="emoji">🙏</div>
+      <h1>Thank you for telling us</h1>
+      <p class="muted">
+        This went straight to the manager at {{ business.name }}.
+        {% if review.customer_contact %}Someone will reach out to you shortly.
+        {% else %}We are sorry the visit fell short, and we will use this to fix it.{% endif %}
+      </p>
+    {% endif %}
+
+    {% if review.routed_public %}
+    <div class="thanks-public">
+      <p class="small" style="margin:0 0 .8rem">
+        {% if happy %}
+          Would you share it publicly? It takes about 20 seconds.
+        {% else %}
+          You are welcome to post this publicly too — your honest review is your own.
+        {% endif %}
+      </p>
+      <a class="btn lg block" href="{{ business.google_review_url }}" target="_blank" rel="noopener">
+        Post this on Google
+      </a>
+      <p class="small muted" style="margin-top:.8rem">No thanks — <a href="/">close this page</a></p>
+    </div>
+    {% if business.google_auto and happy %}
+    <p class="small muted" id="autonote">Taking you to Google…</p>
+    <script>
+      // Give the page a moment to be seen, then hand over. The button above still
+      // works if the browser blocks the redirect. Only ever on a happy rating - nobody
+      // should be pushed towards a public page while they are annoyed.
+      setTimeout(function () {
+        window.location.href = {{ business.google_review_url | tojson }};
+      }, 1400);
+    </script>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

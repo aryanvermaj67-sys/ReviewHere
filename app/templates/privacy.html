@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Privacy · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:640px">
+  <a class="brand" href="/" style="font-size:1.3rem">Review<span>Here</span></a>
+  <h1 style="margin-top:1.2rem">How your data is used</h1>
+  <p class="muted" style="margin-top:-.2rem">Last updated when this page was deployed.</p>
+
+  <div class="card">
+    <h3 style="margin-top:0">What is collected when you leave a review</h3>
+    <ul class="small" style="padding-left:1.1rem;color:var(--ink-soft)">
+      <li>Your star rating, any category ratings, and your written comment.</li>
+      <li>Your name and contact details — <strong>only if you type them in</strong>. Both are optional.</li>
+      <li>Which tag you tapped — which table, counter or desk — and the time of the tap.</li>
+      <li>Your browser's user-agent string, and your IP address for a short window, used to
+        stop the form being spammed.</li>
+    </ul>
+    <p class="small muted" style="margin:0">
+      No cookies are set on the guest review page, and there are no third-party trackers or
+      analytics scripts on it.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3 style="margin-top:0">Who can see it</h3>
+    <p class="small" style="margin:0;color:var(--ink-soft)">
+      Only the business you reviewed. Reviews are private to that business's dashboard —
+      they are not published on this site, not shown to other businesses, and not sold or
+      shared with anyone. Guest review pages are marked <code class="token">noindex</code>, so
+      search engines do not list them.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3 style="margin-top:0">Posting publicly is your choice</h3>
+    <p class="small" style="margin:0;color:var(--ink-soft)">
+      If you rate a business highly, you may be offered a button to post your review on
+      Google. That is optional, it opens Google separately, and nothing you wrote here is sent
+      there automatically — you write the public review yourself.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3 style="margin-top:0">Removing your review</h3>
+    <p class="small" style="margin:0;color:var(--ink-soft)">
+      Ask the business you reviewed, or email
+      {% if support %}<a href="mailto:{{ support }}">{{ support }}</a>{% else %}the operator of
+      this site{% endif %} with roughly when you visited and which business. Reviews are
+      deleted on request, along with any contact details attached to them.
+    </p>
+  </div>
+</div>
+{% endblock %}

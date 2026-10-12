@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}ReviewHere · NFC feedback for any business{% endblock %}
+{% block body %}
+
+<section class="hero">
+  <div class="hero-in">
+    <a class="brand" href="/" style="font-size:1.35rem">Review<span>Here</span></a>
+    <div style="margin-top:2rem">
+      <span class="eyebrow">⚡ One tap · no app · no login</span>
+    </div>
+    <h1>Turn a tap into an honest review.</h1>
+    <p class="lead">
+      Stick an NFC tag on every table, counter or desk. Customers tap it with their phone,
+      rate the visit in seconds, and you see exactly which spot is winning and which one is
+      quietly costing you.
+    </p>
+    <div class="hero-cta">
+      {% if demo_tag %}
+      <a class="btn lg" href="/t/{{ demo_tag.token }}">Try the customer page →</a>
+      {% endif %}
+      <a class="btn lg ghost" href="/signup">Set up my business</a>
+      {% if user %}
+      <a class="btn lg quiet" href="/dashboard">Go to dashboard</a>
+      {% else %}
+      <a class="btn lg quiet" href="/login">Log in</a>
+      {% endif %}
+    </div>
+    <p class="small muted" style="margin-top:1.2rem">
+      7 days free · no card to start · works on any phone made in the last decade
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>How it works</h2>
+    <p class="muted">From sticker to insight in about five minutes.</p>
+  </div>
+  <ol class="steps">
+    <li><strong>Create a tag for each spot.</strong> A table, a counter, a treatment room —
+      whatever your customers sit at or stand in front of.</li>
+    <li><strong>Write the link onto an NFC sticker.</strong> Do it from your own Android phone
+      in the dashboard, or print the QR fallback while the stickers are in the post.</li>
+    <li><strong>The customer taps and rates.</strong> No app, no download, no account. The page
+      opens by itself.</li>
+    <li><strong>You read it the same evening.</strong> Every rating, comment and contact detail,
+      grouped by spot, category and day.</li>
+  </ol>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="ficon">⭐</div>
+      <h3>Public reviews, more of them</h3>
+      <p>Happy customers get a one-tap route to your Google review page, at the moment they
+        are actually happy — not three days later in an email nobody opens.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon">🤫</div>
+      <h3>Problems reach you first</h3>
+      <p>An unhappy customer tells you privately, with a way to contact them. You get the
+        chance to fix it before it becomes a public one-star.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon">📍</div>
+      <h3>Per-spot detail</h3>
+      <p>See which table, counter or room is dragging your average down. Averages hide
+        problems; locations expose them.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon">🏷️</div>
+      <h3>Any kind of business</h3>
+      <p>Restaurant, shop, salon, clinic, hotel, gym or office — the wording and the rating
+        categories change to match what you actually do.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon">📶</div>
+      <h3>No hardware to run</h3>
+      <p>The customer's phone is the reader. The tag holds nothing but a link, so there is
+        nothing to charge, update or repair.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon">🔒</div>
+      <h3>Private by default</h3>
+      <p>Feedback is visible only to you. Guest pages are hidden from search engines, and no
+        trackers run on them.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="section-head">
+    <h2>Simple pricing</h2>
+    <p class="muted">Tags are yours to keep. The dashboard is the subscription.</p>
+  </div>
+  <div class="pricing">
+    <div class="plan">
+      <h3 style="margin-bottom:.2rem">NFC tags</h3>
+      <p class="small muted" style="margin-bottom:.6rem">One-time, per tag</p>
+      <div class="price">₹300<small> each</small></div>
+      <ul>
+        <li>Printed and programmed for your business</li>
+        <li>Order as many as you have spots</li>
+        <li>Rewritable — move them any time</li>
+        <li>QR fallback printed free from the dashboard</li>
+      </ul>
+    </div>
+    <div class="plan highlight">
+      <h3 style="margin-bottom:.2rem">Dashboard</h3>
+      <p class="small muted" style="margin-bottom:.6rem">After a 7-day free trial</p>
+      <div class="price">₹499<small>/month</small></div>
+      <ul>
+        <li>Unlimited taps and reviews</li>
+        <li>Every spot, category and day broken out</li>
+        <li>Private inbox for unhappy customers</li>
+        <li>CSV export of everything, whenever you want</li>
+        <li>Cancel any time — reviews keep arriving</li>
+      </ul>
+      <a class="btn block" href="/signup" style="margin-top:1.2rem">Start free trial</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="site-foot-in">
+    <div>
+      <a class="brand" href="/">Review<span>Here</span></a>
+      <p class="small muted" style="margin:.4rem 0 0">NFC feedback for any business.</p>
+    </div>
+    <div class="small">
+      <a href="/signup">Sign up</a> · <a href="/login">Log in</a> · <a href="/privacy">Privacy</a>
+    </div>
+  </div>
+</footer>
+{% endblock %}

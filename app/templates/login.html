@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Log in · ReviewHere{% endblock %}
+{% block body %}
+<div style="max-width:400px;margin:0 auto;padding:4rem 1.2rem">
+  <a class="brand" href="/" style="font-size:1.4rem">Review<span>Here</span></a>
+  <h1 style="margin-top:1.4rem">Owner log in</h1>
+  <p class="muted small">Sign in to see the feedback coming in from your customers.</p>
+
+  {% if error %}
+  <div class="notice" style="background:#fdeceb;border-color:#f5c6c2;color:#a03127">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/login" class="card" style="margin-top:1rem">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autocomplete="username" autofocus>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password">
+    </div>
+    <button class="btn block" type="submit">Log in</button>
+  </form>
+  <p class="small muted" style="text-align:center;margin-top:1rem">
+    <a href="/forgot">Forgot your password?</a>
+  </p>
+  <p class="small muted" style="text-align:center;margin-top:.4rem">
+    New here? <a href="/signup">Create your business's dashboard</a>
+  </p>
+</div>
+{% endblock %}

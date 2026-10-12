@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Settings · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:720px">
+  <div class="page-head"><h1 style="margin:0">Settings</h1></div>
+  {% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+
+  <form class="card" method="post" action="/dashboard/settings">
+    <h3>Business</h3>
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value="{{ r.name }}" required>
+    </div>
+    <div class="field">
+      <label for="slug">Link name</label>
+      <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+        <span class="small muted">{{ base }}/r/</span>
+        <input type="text" id="slug" name="slug" value="{{ r.slug }}" maxlength="40"
+               style="flex:1;min-width:140px">
+      </div>
+      <p class="small muted" style="margin:.35rem 0 0">
+        This is the address customers land on, and it goes on printed cards and tags.
+        Changing it <strong>breaks any tag already written with the old one</strong> — set it
+        before you write anything.
+      </p>
+    </div>
+    <div class="field">
+      <label for="tagline">Tagline shown to guests</label>
+      <input type="text" id="tagline" name="tagline" value="{{ r.tagline }}" placeholder="Wood-fired since 2011">
+    </div>
+    <div class="field">
+      <label for="logo_url">Logo URL (optional)</label>
+      <input type="url" id="logo_url" name="logo_url" value="{{ r.logo_url }}" placeholder="https://…/logo.png">
+    </div>
+    <div class="field">
+      <label for="google_review_url">Google review link</label>
+      <input type="url" id="google_review_url" name="google_review_url" value="{{ r.google_review_url }}"
+             placeholder="https://g.page/r/…/review">
+      <p class="small muted" style="margin:.3rem 0 0">
+        Guests who rate you at or above the threshold below get a button to post this review publicly.
+        Leave empty to keep every review private.
+      </p>
+    </div>
+    <div class="field">
+      <label for="positive_threshold">Public-review threshold</label>
+      <select id="positive_threshold" name="positive_threshold">
+        {% for i in [3, 4, 5] %}
+        <option value="{{ i }}" {% if r.positive_threshold == i %}selected{% endif %}>{{ i }} stars and above</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="accent">Accent colour on the guest page</label>
+      <input type="text" id="accent" name="accent" value="{{ r.accent }}" placeholder="#e0603a">
+    </div>
+    <div class="field">
+      <label for="tap_mode">What happens when someone taps a tag</label>
+      <select id="tap_mode" name="tap_mode">
+        <option value="rate_first" {% if r.tap_mode != 'direct' %}selected{% endif %}>
+          Ask for a rating first, then route them
+        </option>
+        <option value="direct" {% if r.tap_mode == 'direct' %}selected{% endif %}>
+          Send everyone straight to Google
+        </option>
+      </select>
+      <p class="small muted" style="margin:.3rem 0 0">
+        <strong>Ask first</strong> gives you private feedback and your own dashboard data.
+        <strong>Straight to Google</strong> makes the tag a shortcut to your public review page —
+        no rating is collected, nothing appears in your inbox, and unhappy customers go there too.
+      </p>
+    </div>
+    <div class="field">
+      <label for="routing">Who is invited to post on Google</label>
+      <select id="routing" name="routing">
+        <option value="open" {% if r.routing != 'gated' %}selected{% endif %}>
+          Everyone who leaves a rating — recommended
+        </option>
+        <option value="gated" {% if r.routing == 'gated' %}selected{% endif %}>
+          Only ratings of {{ r.positive_threshold }} stars and above
+        </option>
+      </select>
+      <p class="small muted" style="margin:.3rem 0 0">
+        You get the private feedback either way. <strong>Everyone</strong> is what Google's
+        review policy expects — filtering by rating is "review gating", which Google
+        prohibits and can penalise your business profile for.
+      </p>
+    </div>
+    <div class="field">
+      <label>After a good rating</label>
+      <label class="small" style="font-weight:500;display:flex;gap:.5rem;align-items:flex-start">
+        <input type="checkbox" name="google_auto" value="1" style="width:auto;margin-top:.2rem"
+               {% if r.google_auto %}checked{% endif %}>
+        <span>Send them straight to Google instead of showing a button. Converts better,
+          but gives the customer less choice — and it only happens at all when a Google
+          link is set above.</span>
+      </label>
+    </div>
+    <div class="field">
+      <label for="business_type">Kind of business</label>
+      <select id="business_type" name="business_type">
+        {% for value, label in business_type_choices() %}
+        <option value="{{ value }}" {% if r.business_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="small muted" style="margin:.3rem 0 0">
+        Changes the wording customers see and the names of the four rating categories.
+        Existing reviews keep their scores.
+      </p>
+    </div>
+    <div class="field">
+      <label for="tz_offset">Timezone</label>
+      <select id="tz_offset" name="tz_offset">
+        {% for value, name in [(-480, 'UTC−8 · Los Angeles'), (-300, 'UTC−5 · New York'),
+                               (0, 'UTC+0 · London'), (60, 'UTC+1 · Paris, Lagos'),
+                               (180, 'UTC+3 · Nairobi'), (240, 'UTC+4 · Dubai'),
+                               (330, 'UTC+5:30 · India'), (420, 'UTC+7 · Bangkok'),
+                               (480, 'UTC+8 · Singapore'), (540, 'UTC+9 · Tokyo'),
+                               (600, 'UTC+10 · Sydney')] %}
+        <option value="{{ value }}" {% if r.tz_offset == value %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <p class="small muted" style="margin:.3rem 0 0">
+        Timestamps and the daily chart are shown in this zone. Stored times stay in UTC.
+      </p>
+    </div>
+    <button class="btn" type="submit">Save settings</button>
+  </form>
+
+  <div class="card" style="margin-top:1rem">
+    <h3>Your public link</h3>
+    <p class="small muted" style="margin:.2rem 0 .6rem">
+      Works without any tag — put it on receipts, the website, or a printed QR.
+    </p>
+    <code class="token">{{ base }}/r/{{ r.slug }}</code>
+    <a class="small" href="/r/{{ r.slug }}" target="_blank" style="margin-left:.5rem">Open →</a>
+  </div>
+
+  <form class="card" method="post" action="/dashboard/password" style="margin-top:1rem">
+    <h3>Change password</h3>
+    <div class="field">
+      <label for="current_password">Current password</label>
+      <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label for="new_password">New password (8+ characters)</label>
+      <input type="password" id="new_password" name="new_password" required minlength="8" autocomplete="new-password">
+    </div>
+    <button class="btn ghost" type="submit">Update password</button>
+  </form>
+</div>
+{% endblock %}

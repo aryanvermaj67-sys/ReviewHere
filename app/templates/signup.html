@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Create your business · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:480px">
+  <a class="brand" href="/" style="font-size:1.3rem">Review<span>Here</span></a>
+  <h1 style="margin-top:1.2rem">Start collecting reviews</h1>
+  <p class="muted" style="margin-top:-.2rem">
+    Create your business, get a link for every spot, and stick a tag on each one.
+  </p>
+
+  {% if error %}<div class="notice" style="background:#fdeceb;border-color:#f5c6c2;color:#a03028">{{ error }}</div>{% endif %}
+
+  {% if closed %}
+  <div class="card">
+    <h3 style="margin-top:0">Signup is closed right now</h3>
+    <p class="small muted" style="margin:0">
+      {% if support %}Email <a href="mailto:{{ support }}">{{ support }}</a> and we'll set you up.
+      {% else %}Contact the operator of this site to get an account.{% endif %}
+    </p>
+  </div>
+  {% else %}
+  <form method="post" action="/signup" class="card">
+    <div class="field">
+      <label for="business_name">Business name</label>
+      <input type="text" id="business_name" name="business_name" required maxlength="80"
+             placeholder="Spice Route" autocomplete="organization">
+    </div>
+    <div class="field">
+      <label for="business_type">What kind of business is it?</label>
+      <select id="business_type" name="business_type" onchange="renameUnit()">
+        {% for value, label in business_type_choices() %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="small muted" style="margin:.3rem 0 0">
+        Sets the wording your customers see and what the rating categories are called.
+      </p>
+    </div>
+    <div class="field">
+      <label for="email">Your email</label>
+      <input type="email" id="email" name="email" required autocomplete="email">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required minlength="8"
+             autocomplete="new-password">
+      <p class="small muted" style="margin:.3rem 0 0">At least 8 characters.</p>
+    </div>
+    <div class="field">
+      <label for="tables"><span id="unitCount">How many tables?</span></label>
+      <input type="number" id="tables" name="tables" value="8" min="1" max="60">
+      <p class="small muted" style="margin:.3rem 0 0">
+        One tag per <span id="unitWord">table</span>. You can add or remove them later.
+      </p>
+    </div>
+    <div class="field">
+      <label for="tz_offset">Your timezone</label>
+      <select id="tz_offset" name="tz_offset">
+        <option value="-480">UTC−8 · Los Angeles</option>
+        <option value="-300">UTC−5 · New York</option>
+        <option value="0">UTC+0 · London</option>
+        <option value="60">UTC+1 · Paris, Lagos</option>
+        <option value="180">UTC+3 · Dubai (−1), Nairobi</option>
+        <option value="330" selected>UTC+5:30 · India</option>
+        <option value="420">UTC+7 · Bangkok, Jakarta</option>
+        <option value="480">UTC+8 · Singapore, Manila</option>
+        <option value="540">UTC+9 · Tokyo, Seoul</option>
+        <option value="600">UTC+10 · Sydney</option>
+      </select>
+      <p class="small muted" style="margin:.3rem 0 0">
+        Decides where your day starts, so "today's reviews" means your today.
+      </p>
+    </div>
+    <div style="position:absolute;left:-9999px" aria-hidden="true">
+      <label for="website">Leave this empty</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+    <button class="btn block lg" type="submit">Create my dashboard</button>
+  </form>
+  {% endif %}
+
+  <p class="small muted" style="text-align:center;margin-top:1rem">
+    Already have an account? <a href="/login">Log in</a>
+  </p>
+
+<script>
+  // Keep the wording of the tag-count question in step with the chosen business type.
+  const UNITS = {{ unit_map | tojson }};
+  function renameUnit() {
+    const unit = (UNITS[document.getElementById("business_type").value] || "spot").toLowerCase();
+    document.getElementById("unitCount").textContent = "How many " + unit + "s?";
+    document.getElementById("unitWord").textContent = unit;
+  }
+  renameUnit();
+</script>
+</div>
+{% endblock %}

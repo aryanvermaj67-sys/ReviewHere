@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Pay for your tags · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:460px">
+  <h1 style="margin-top:1rem">Pay for your tags</h1>
+
+  <div class="card">
+    <div class="subrate"><span>Tags</span><strong>{{ order.quantity }}</strong></div>
+    <div class="subrate"><span>Price per tag</span><strong>₹{{ rupees(order.unit_paise) }}</strong></div>
+    <div class="subrate"><span>Total</span><strong class="price">₹{{ rupees(order.amount_paise) }}</strong></div>
+
+    {% if order.status == 'paid' %}
+    <p class="notice" style="margin:1rem 0 0">This order is already paid. Nothing more to do.</p>
+    {% elif not order.provider_order_id %}
+    <p class="notice" style="background:#fdeceb;border-color:#f5c6c2;color:#a03028;margin:1rem 0 0">
+      This order has no payment reference — payments were not configured when it was created.
+    </p>
+    {% else %}
+    <button class="btn block lg" id="payBtn" style="margin-top:1rem">Pay ₹{{ rupees(order.amount_paise) }}</button>
+    <p class="small muted" style="margin:.7rem 0 0;text-align:center">
+      UPI, card or netbanking. You are not charged anything for the subscription here.
+    </p>
+    {% endif %}
+  </div>
+
+  <p class="small muted" style="text-align:center;margin-top:1rem">
+    <a href="/dashboard/billing">Back to billing</a>
+  </p>
+</div>
+
+<form method="post" action="/dashboard/billing/confirm" id="confirmForm" style="display:none">
+  <input type="hidden" name="razorpay_order_id" id="f_order">
+  <input type="hidden" name="razorpay_payment_id" id="f_payment">
+  <input type="hidden" name="razorpay_signature" id="f_signature">
+</form>
+
+{% if order.status != 'paid' and order.provider_order_id %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  document.getElementById("payBtn").addEventListener("click", function () {
+    const checkout = new Razorpay({
+      key: "{{ razorpay_key }}",
+      order_id: "{{ order.provider_order_id }}",
+      amount: {{ order.amount_paise }},
+      currency: "{{ order.currency }}",
+      name: "ReviewHere",
+      description: "{{ order.quantity }} NFC tags",
+      prefill: { name: "{{ order.ship_name }}", contact: "{{ order.ship_phone }}", email: "{{ user.email }}" },
+      theme: { color: "{{ b.accent }}" },
+      handler: function (response) {
+        // Hand the signed result back to the server, which verifies it before
+        // marking anything paid. The webhook is the real authority.
+        document.getElementById("f_order").value = response.razorpay_order_id;
+        document.getElementById("f_payment").value = response.razorpay_payment_id;
+        document.getElementById("f_signature").value = response.razorpay_signature;
+        document.getElementById("confirmForm").submit();
+      }
+    });
+    checkout.open();
+  });
+</script>
+{% endif %}
+{% endblock %}

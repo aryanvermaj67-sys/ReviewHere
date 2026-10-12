@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Write tags · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:720px">
+  <div class="page-head">
+    <div>
+      <h1 style="margin:0">Write the stickers</h1>
+      <p class="muted small" style="margin:.2rem 0 0">
+        Open this page on an Android phone with Chrome, hold a blank NTAG sticker to the back of the
+        phone, and tap Write. Each sticker gets its own link — pointing at this dashboard.
+      </p>
+    </div>
+    <a class="btn ghost" href="/dashboard/tags">Back to tags</a>
+  </div>
+
+  <div id="unsupported" class="card" style="margin-bottom:1rem;display:none">
+    <h3 style="margin-top:0">This browser can't write NFC tags</h3>
+    <p class="small muted" style="margin:0">
+      Web NFC needs <strong>Chrome on Android</strong> over <strong>https://</strong>. On a desktop,
+      an iPhone, or a plain <code class="token">http://</code> address the buttons below stay disabled.
+      Two ways round it: write the tags once with the free <strong>NFC Tools</strong> app (choose
+      <em>Write → Add a record → URL</em> and paste the link from each row), or put this app behind an
+      HTTPS tunnel and come back to this page.
+    </p>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <div class="field" style="margin:0">
+      <label for="base">Address to write onto the tags</label>
+      <input type="text" id="base" value="{{ base }}">
+      <p class="small muted" style="margin:.4rem 0 0">
+        This must be the address guests' phones can reach — your public domain, not
+        <code class="token">localhost</code>. Change it here before writing and every link below
+        updates. Rewritable tags can be re-written later, but you only want to do this once.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Tags</h3>
+    <p id="status" class="small" style="min-height:1.3rem;font-weight:600;color:var(--accent)"></p>
+    <div class="scroll-x"><table>
+      <tr><th>{{ vocab(user.business_type).unit }}</th><th>Link</th><th>Bytes</th><th>Chip UID</th><th></th></tr>
+      {% for t in tags %}
+      <tr data-id="{{ t.id }}" data-token="{{ t.token }}">
+        <td><strong>{{ t.label }}</strong></td>
+        <td><code class="token url">…</code></td>
+        <td class="small muted bytes">—</td>
+        <td class="small muted uid">{{ t.uid or '—' }}</td>
+        <td style="white-space:nowrap">
+          <button class="btn write" type="button" style="padding:.4rem .8rem;font-size:.85rem">Write</button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted small">No active tags — create some first.</td></tr>
+      {% endfor %}
+    </table></div>
+    <p class="small muted" style="margin:.8rem 0 0">
+      NTAG213 holds about 132 bytes of URL, so anything under that is safe. Writing also stores the
+      chip's UID against that spot, which is what a future desk reader would report to
+      <code class="token">POST /api/scan</code>.
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var supported = ('NDEFReader' in window) && window.isSecureContext;
+  var baseInput = document.getElementById('base');
+  var statusEl = document.getElementById('status');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('tr[data-token]'));
+
+  function urlFor(row) {
+    return baseInput.value.replace(/\/+$/, '') + '/t/' + row.dataset.token;
+  }
+
+  function refresh() {
+    rows.forEach(function (row) {
+      var url = urlFor(row);
+      var bytes = new TextEncoder().encode(url).length;
+      row.querySelector('.url').textContent = url;
+      var cell = row.querySelector('.bytes');
+      cell.textContent = bytes;
+      cell.style.color = bytes > 132 ? 'var(--bad)' : '';
+    });
+    try { localStorage.setItem('reviewhere_base', baseInput.value); } catch (e) {}
+  }
+
+  try {
+    var saved = localStorage.getItem('reviewhere_base');
+    if (saved) baseInput.value = saved;
+  } catch (e) {}
+  baseInput.addEventListener('input', refresh);
+  refresh();
+
+  if (!supported) {
+    document.getElementById('unsupported').style.display = '';
+    rows.forEach(function (row) { row.querySelector('.write').disabled = true; });
+    return;
+  }
+
+  function say(text, bad) {
+    statusEl.textContent = text;
+    statusEl.style.color = bad ? 'var(--bad)' : 'var(--accent)';
+  }
+
+  rows.forEach(function (row) {
+    row.querySelector('.write').addEventListener('click', async function () {
+      var btn = this;
+      var url = urlFor(row);
+      btn.disabled = true;
+      say('Hold the sticker against the back of the phone…');
+      try {
+        var ndef = new NDEFReader();
+        // Capture the chip UID from the same tap that we write on.
+        ndef.onreading = function (event) {
+          if (!event.serialNumber) return;
+          row.querySelector('.uid').textContent = event.serialNumber;
+          var body = new FormData();
+          body.append('uid', event.serialNumber);
+          fetch('/dashboard/tags/' + row.dataset.id + '/uid.json', { method: 'POST', body: body });
+        };
+        await ndef.scan();
+        await ndef.write({ records: [{ recordType: 'url', data: url }] });
+        btn.textContent = 'Written ✓';
+        btn.classList.add('ghost');
+        say(row.querySelector('strong').textContent + ' written. Next sticker.');
+      } catch (err) {
+        say('Could not write: ' + err.message, true);
+        btn.textContent = 'Retry';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

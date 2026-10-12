@@ -1,0 +1,37 @@
+# Fly.io configuration. Rename `app` to something unique before the first deploy.
+app = "reviewhere"
+primary_region = "bom"   # Mumbai. Use the region closest to your restaurants.
+
+[build]
+
+[env]
+  NFC_ENV = "production"
+  NFC_DB_PATH = "/data/nfc.db"
+
+# SQLite lives on this volume, so it survives deploys and restarts.
+[[mounts]]
+  source = "reviewhere_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

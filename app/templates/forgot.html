@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Reset your password · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:420px">
+  <a class="brand" href="/" style="font-size:1.3rem">Review<span>Here</span></a>
+  <h1 style="margin-top:1.2rem">Forgot your password?</h1>
+
+  {% if error %}<div class="notice" style="background:#fdeceb;border-color:#f5c6c2;color:#a03028">{{ error }}</div>{% endif %}
+
+  {% if sent %}
+  <div class="card">
+    <p style="margin:0">
+      If that email has an account, a reset link is on its way. It expires in an hour.
+    </p>
+    <p class="small muted" style="margin:.6rem 0 0">
+      Nothing arriving? Check spam{% if support %}, or write to
+      <a href="mailto:{{ support }}">{{ support }}</a>{% endif %}.
+    </p>
+  </div>
+  {% else %}
+  <p class="muted" style="margin-top:-.2rem">
+    Enter the email you signed up with and we'll send a link to set a new one.
+  </p>
+  <form method="post" action="/forgot" class="card">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autocomplete="email" autofocus>
+    </div>
+    <button class="btn block" type="submit">Send reset link</button>
+  </form>
+  {% endif %}
+
+  <p class="small muted" style="text-align:center;margin-top:1rem">
+    <a href="/login">Back to log in</a>
+  </p>
+</div>
+{% endblock %}

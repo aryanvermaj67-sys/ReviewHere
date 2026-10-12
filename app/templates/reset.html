@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Choose a new password · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:420px">
+  <a class="brand" href="/" style="font-size:1.3rem">Review<span>Here</span></a>
+
+  {% if not valid %}
+  <h1 style="margin-top:1.2rem">This link has expired</h1>
+  <div class="card">
+    <p style="margin:0 0 .8rem">
+      Reset links last an hour and work once. Ask for a fresh one.
+    </p>
+    <a class="btn block" href="/forgot">Send me a new link</a>
+  </div>
+  {% else %}
+  <h1 style="margin-top:1.2rem">Choose a new password</h1>
+
+  {% if error %}<div class="notice" style="background:#fdeceb;border-color:#f5c6c2;color:#a03028">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/reset/{{ token }}" class="card">
+    <div class="field">
+      <label for="password">New password</label>
+      <input type="password" id="password" name="password" required minlength="8"
+             autocomplete="new-password" autofocus>
+      <p class="small muted" style="margin:.3rem 0 0">At least 8 characters.</p>
+    </div>
+    <button class="btn block" type="submit">Set password and log in</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Tags · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap">
+  <div class="page-head">
+    <div>
+      <h1 style="margin:0">NFC tags</h1>
+      <p class="muted small" style="margin:.2rem 0 0">
+        Each tag is one physical sticker. Write its link onto the chip — the customer's phone does the rest.
+      </p>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <a class="btn ghost" href="/dashboard/tags/print" target="_blank">Printable QR sheet</a>
+      <a class="btn" href="/dashboard/tags/write">Write stickers</a>
+    </div>
+  </div>
+
+  {% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+
+  <div class="card" style="margin-bottom:1rem">
+    <h3>Add tags</h3>
+    <form method="post" action="/dashboard/tags/new" class="filters" style="margin:0">
+      <div class="field" style="flex:1">
+        <label for="label">Label</label>
+        <input type="text" id="label" name="label" value="{{ vocab(user.business_type).unit }}" required>
+      </div>
+      <div class="field">
+        <label for="zone">Zone (optional)</label>
+        <input type="text" id="zone" name="zone" placeholder="Ground floor">
+      </div>
+      <div class="field" style="min-width:90px">
+        <label for="count">How many</label>
+        <input type="number" id="count" name="count" value="1" min="1" max="100">
+      </div>
+      <button class="btn" type="submit">Create</button>
+    </form>
+    <p class="small muted" style="margin:.6rem 0 0">
+      Creating more than one numbers them automatically — “{{ vocab(user.business_type).unit }} 1”, “{{ vocab(user.business_type).unit }} 2”, and so on.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="scroll-x"><table>
+      <tr>
+        <th>Label</th><th>Link to write on the tag</th><th>QR</th>
+        <th>Taps</th><th>Reviews</th><th>Avg</th><th>Chip UID</th><th></th>
+      </tr>
+      {% for t in tags %}
+      <tr {% if not t.active %}style="opacity:.5"{% endif %}>
+        <td>
+          <strong>{{ t.label }}</strong>
+          {% if t.zone %}<br><span class="small muted">{{ t.zone }}</span>{% endif %}
+        </td>
+        <td>
+          <code class="token">{{ base }}/t/{{ t.token }}</code>
+          <button class="chip small" type="button" style="margin-left:.3rem"
+                  onclick="navigator.clipboard.writeText('{{ base }}/t/{{ t.token }}'); this.textContent='Copied';">Copy</button>
+          <br><a class="small" href="/t/{{ t.token }}" target="_blank">Open guest page →</a>
+        </td>
+        <td><a href="/qr/{{ t.token }}.png" target="_blank"><img src="/qr/{{ t.token }}.png" width="44" height="44" alt="QR"></a></td>
+        <td>{{ t.scan_count }}</td>
+        <td>{{ t.review_count }}</td>
+        <td class="rating-stars">{{ ('%.1f' % t.avg_rating) if t.avg_rating else '—' }}</td>
+        <td>
+          <form method="post" action="/dashboard/tags/{{ t.id }}/uid" style="display:flex;gap:.25rem">
+            <input type="text" name="uid" value="{{ t.uid }}" placeholder="04:A2:…"
+                   style="width:110px;font-size:.8rem;padding:.3rem .4rem">
+            <button class="chip" type="submit">Save</button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="/dashboard/tags/{{ t.id }}/toggle">
+            <button class="chip" type="submit">{{ 'Disable' if t.active else 'Enable' }}</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted small">No tags yet — create your first one above.</td></tr>
+      {% endfor %}
+    </table></div>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3>Writing the physical tags</h3>
+    <ol class="muted small" style="padding-left:1.1rem;margin:0">
+      <li>NTAG213 stickers are the right chip — cheap, rewritable, and far bigger than these links need.</li>
+      <li>Deploy this app to a real domain first, so the link you burn onto the tag is one a guest's
+        phone can actually open.</li>
+      <li>Write each link as a <strong>URL record</strong>: use the <em>Write stickers</em> page from an
+        Android phone, or the NFC Tools app on any phone.</li>
+      <li>Test by tapping, then lock the tag if you want it read-only — locking is permanent.</li>
+      <li>The printable QR sheet is the fallback for iPhones with NFC scanning switched off.</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

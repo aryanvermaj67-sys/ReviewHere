@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Tag cards · ReviewHere{% endblock %}
+{% block body %}
+<div class="wrap">
+  <div class="noprint page-head">
+    <div>
+      <h1 style="margin:0">Tag cards</h1>
+      <p class="muted small" style="margin:.2rem 0 0">Print, cut, and stand one at each spot. The QR
+        points at the same page the NFC tag will open.</p>
+    </div>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+
+  <div class="print-grid">
+    {% for t in tags %}
+    <div class="tent">
+      <div style="font-weight:800;font-size:1.2rem">{{ user.business_name }}</div>
+      <div class="muted small" style="margin-bottom:.5rem">{{ t.label }}{% if t.zone %} · {{ t.zone }}{% endif %}</div>
+      <img src="/qr/{{ t.token }}.png" alt="QR for {{ t.label }}">
+      <div style="font-weight:700;margin-top:.4rem">Tap or scan to rate us</div>
+      <div class="small muted">{{ base }}/t/{{ t.token }}</div>
+    </div>
+    {% else %}
+    <p class="muted">No active tags to print.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
